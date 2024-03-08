@@ -7,83 +7,88 @@
 
 #define MAX_LIMIT 100
 
-int main() { 
-    char *input[MAX_LIMIT];
-    do{
-        char str[MAX_LIMIT];
-        printf("Enter command with full path: ");
-        fgets(str, MAX_LIMIT, stdin);
+char *read_input()
+{
+    char *str = (char *)malloc(MAX_LIMIT * sizeof(char));
+    printf("%s:", getcwd(str, MAX_LIMIT));
+    fgets(str, MAX_LIMIT, stdin);
+    // Remove trailing newline character
+    str[strcspn(str, "\n")] = 0;
+    return str;
+}
 
-        // Remove trailing newline character
-        str[strcspn(str, "\n")] = 0;
+void parse_input(char **input, char *str)
+{
 
-        const char delimiter[] = " ";
-        char *token = strtok(str, delimiter);
-        int size = 0;
+    const char delimiter[] = " ";
+    char *token = strtok(str, delimiter);
+    int size = 0;
 
-        while (token != NULL && size < MAX_LIMIT - 1) { // Avoid overflow
-            input[size++] = token;
-            token = strtok(NULL, delimiter); 
-        } 
-        input[size] = NULL; // NULL terminate the argument list
+    while (token != NULL && size < MAX_LIMIT - 1)
+    { // Avoid overflow
+        input[size++] = token;
+        token = strtok(NULL, delimiter);
+    }
+    input[size] = NULL; // NULL terminate the argument list
+}
 
-
-        pid_t pid = fork();
-        if(pid == 0){
-            execvp(input[0], input);
-            if(strcmp(input[0], "exit")){
-                perror("execvp");
-                return -1;
-            }
-        }
-        else if (pid > 0){
-            wait(&pid);
-        }
-    }while (strcmp(input[0], "exit"));
-    return 0;
+void setup_environment()
+{
+    chdir("/home/nouran");
 }
 
 
-// function parent_main()
-//     register_child_signal(on_child_exit())
-//     setup_environment()
-//     shell()
+void execute_command(char **input)
+{
+    pid_t pid = fork();
+    if (pid == 0)
+    {
+        execvp(input[0], input);
+        perror("execvp");
+        exit(0);
+    }
+    else if (pid > 0)
+    {
+        wait(&pid);
+    }
+}
 
+void execute_shell_bultin(char **input){
+    if(strcmp(input[0], "cd") == 0){
+        chdir(input[1]);
+    }else if(strcmp(input[0], "echo") == 0){
+        printf("%s\n", input[1]);
+    }else if(strcmp(input[0], "export") == 0){
+
+    }
+}
+
+void shell()
+{
+    char *input[MAX_LIMIT];
+    do
+    {
+        parse_input(input, read_input());
+        if (strcmp(input[0], "cd") == 0 || strcmp(input[0], "echo") == 0 || strcmp(input[0], "export") == 0)
+        {
+            execute_shell_bultin(input);
+        }
+        else if(strcmp(input[0], "exit"))
+        {
+            execute_command(input);
+        }
+    } while (strcmp(input[0], "exit"));
+}
 
 // function on_child_exit()
 //     reap_child_zombie()
 //     write_to_log_file("Child terminated")
 
 
-// function setup_environment()
-//     cd(Current_Working_Directory)
-
-
-// function shell()
-//     do
-//         parse_input(read_input())
-//         evaluate_expression():
-//         switch(input_type):
-//             case shell_builtin:
-//                 execute_shell_bultin();
-//             case executable_or_error:
-//                 execute_command():
-
-//     while command_is_not_exit
-
-
-// function execute_shell_bultin()
-//     swirch(command_type):
-//         case cd:
-//         case echo:
-//         case export:
-
-
-// function execute_command()
-//     child_id = fork()
-//     if child:
-//         execvp(command parsed)
-//         print("Error")
-//         exit()
-//     else if parent and foreground:
-//         waitpid(child)
+int main()
+{
+    // register_child_signal(on_child_exit())
+    setup_environment();
+    shell();
+    return 0;
+}
