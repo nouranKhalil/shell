@@ -5,6 +5,7 @@
 #include <sched.h>
 #include <sys/wait.h>
 
+
 #define MAX_LIMIT 100
 
 char *var[MAX_LIMIT];
@@ -15,7 +16,7 @@ int size;
 char *read_input()
 {
     char *str = (char *)malloc(MAX_LIMIT * sizeof(char));
-    printf("%s:", getcwd(str, MAX_LIMIT));
+    printf("%s@osUbuntu:%s$ ", getlogin(), getcwd(str, MAX_LIMIT));
     fgets(str, MAX_LIMIT, stdin);
     // Remove trailing newline character
     str[strcspn(str, "\n")] = 0;
@@ -47,6 +48,12 @@ void execute_command(char **input)
     pid_t pid = fork();
     if (pid == 0)
     {
+
+        if(size != 1 && strcmp(input[1], "&") == 0){
+            input[1] = NULL;
+            // printf("%d\n", getpid());
+            // fflush(stdout);
+        }
         execvp(input[0], input);
         perror("execvp");
         exit(0);
@@ -93,11 +100,11 @@ void execute_shell_bultin(char **input)
 
 void evaluate_expression(char **input)
 {
-    if (size != 1 && input[1][0] == '&')
+    if(size != 1 && input[1][0] == '$')
     {
         for (int i = 0; i < len; i++)
         {
-            char tmp[MAX_LIMIT] = "&";
+            char tmp[MAX_LIMIT] = "$";
             if (strcmp(strcat(tmp, var[i]), input[1]) == 0)
             {
                 input[1] = values[i];
@@ -105,6 +112,7 @@ void evaluate_expression(char **input)
             }
         }
     }
+    
 }
 
 void shell()
@@ -131,7 +139,7 @@ void shell()
 
 int main()
 {
-    // register_child_signal(on_child_exit())
+    // signal(SIGCHLD, on_child_exit());
     setup_environment();
     shell();
     return 0;
