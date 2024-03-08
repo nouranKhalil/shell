@@ -51,8 +51,8 @@ void execute_command(char **input)
 
         if(size != 1 && strcmp(input[1], "&") == 0){
             input[1] = NULL;
-            // printf("%d\n", getpid());
-            // fflush(stdout);
+            printf("%d\n", getpid());
+            fflush(stdout);
         }
         execvp(input[0], input);
         perror("execvp");
@@ -60,7 +60,8 @@ void execute_command(char **input)
     }
     else if (pid > 0)
     {
-        wait(&pid);
+        if(size != 1 && strcmp(input[1], "&") == 0);
+        else wait(&pid);
     }
 }
 
@@ -68,8 +69,9 @@ void execute_shell_bultin(char **input)
 {
     if (strcmp(input[0], "cd") == 0)
     {
-        chdir(input[1]);
-    }
+        if(strcmp(input[1], "~") == 0) chdir("/home/nouran");
+        else chdir(input[1]);
+     }
     else if (strcmp(input[0], "echo") == 0)
     {
         printf("%s\n", input[1]);
