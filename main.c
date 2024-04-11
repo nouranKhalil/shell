@@ -13,10 +13,32 @@ char *values[MAX_LIMIT];
 int len = 0;
 int size;
 
+char *read_input();
+void parse_input(char **input, char *str);
+void setup_environment();
+void execute_command(char **input);
+void execute_shell_bultin(char **input);
+void evaluate_expression(char **input);
+void shell();
+void write_to_log_file(const char *str);
+void reap_child_zombie();
+void on_child_exit();
+
+
+int main()
+{
+    signal(SIGCHLD, on_child_exit);
+    setup_environment();
+    shell();
+    return 0;
+}
+
+
+
 char *read_input()
 {
     char *str = (char *)malloc(MAX_LIMIT * sizeof(char));
-    printf("%s@osUbuntu:%s$ ", getlogin(), getcwd(str, MAX_LIMIT));
+    printf("%s@Ubuntu:%s$ ", getlogin(), getcwd(str, MAX_LIMIT));
     fgets(str, MAX_LIMIT, stdin);
     // Remove trailing newline character
     str[strcspn(str, "\n")] = 0;
@@ -40,7 +62,7 @@ void parse_input(char **input, char *str)
 
 void setup_environment()
 {
-    chdir("/home/nouran");
+    chdir(getenv("HOME"));
 }
 
 void execute_command(char **input)
@@ -84,15 +106,7 @@ void execute_shell_bultin(char **input)
     {
         if (len == 0)
         {
-            int i;
         update:
-            i = 3;
-            while(input[i] != NULL){ 
-                strcat(input[2], " ");
-                strcat(input[2], input[i]);
-                i++;
-                printf("%s", input[2]);
-            }
             var[len] = input[1];
             values[len] = input[2];
             len++;
@@ -167,12 +181,4 @@ void reap_child_zombie()
 void on_child_exit()
 {
     reap_child_zombie();
-}
-
-int main()
-{
-    signal(SIGCHLD, on_child_exit);
-    setup_environment();
-    shell();
-    return 0;
 }
